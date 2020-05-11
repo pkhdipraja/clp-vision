@@ -2,7 +2,10 @@
 from __future__ import division
 import os
 import datetime
+import json
+from collections import defaultdict
 import scipy.io as spio
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -33,6 +36,21 @@ code_icorpus = invert_dict(icorpus_code)
 def print_timestamped_message(message, indent=0):
     now = datetime.datetime.now().strftime('%Y-%m-%d @ %H:%M:%S')
     print(' ' * indent, '[ %s ] %s' % (now, message))
+
+
+def load_vg_split(path_prefix, split):
+    path = path_prefix + '/' + split + '.txt'
+    vgdf = pd.read_csv(path, sep=' ', names='file mask'.split())
+    return [int(e.split('/')[1].split('.')[0]) for e in vgdf['file'].tolist()]
+
+
+def load_f30k_splits(path):
+    with open(path, 'r') as f:
+        fjson = json.load(f)
+    fsplits = defaultdict(list)
+    for this_image in fjson['images']:
+        fsplits[this_image['split']].append(int(this_image['filename'].split('.')[0]))
+    return fsplits
 
 
 def saiapr_basepath(image_id):
@@ -133,6 +151,7 @@ def get_image_filename(config, icorp, image_id):
     if code_icorpus[icorp] == 'ade_20k':
         return ade_filename(config, image_id)
     raise ValueError('Unknown corpus code')
+
 
 def get_image_part(config, img_tuple, i_corpus, image_id, bb,
                    resize=True,
